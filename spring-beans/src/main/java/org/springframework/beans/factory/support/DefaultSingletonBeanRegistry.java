@@ -132,6 +132,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	 */
 	protected void addSingleton(String beanName, Object singletonObject) {
 		synchronized (this.singletonObjects) {
+			// 添加至一级缓存单例池中
 			this.singletonObjects.put(beanName, singletonObject);
 			this.singletonFactories.remove(beanName);
 			this.earlySingletonObjects.remove(beanName);
@@ -150,9 +151,13 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	protected void addSingletonFactory(String beanName, ObjectFactory<?> singletonFactory) {
 		Assert.notNull(singletonFactory, "Singleton factory must not be null");
 		synchronized (this.singletonObjects) {
+			// 如果单例池当中不存在才会添加，此处主要是解决循环依赖，如果已经存在单例池中说明已经是一个完整的bean完成了属性注入等
 			if (!this.singletonObjects.containsKey(beanName)) {
+				// 把工厂对象put到二级缓存中
 				this.singletonFactories.put(beanName, singletonFactory);
+				// 从三级缓存中删除，同一个beanName针对spring来说属于同一个对象在三个缓存中只能存在于当中某一个
 				this.earlySingletonObjects.remove(beanName);
+
 				this.registeredSingletons.add(beanName);
 			}
 		}
@@ -174,15 +179,23 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	 */
 	@Nullable
 	protected Object getSingleton(String beanName, boolean allowEarlyReference) {
+		// 从一级缓存单例池中获取bean
 		Object singletonObject = this.singletonObjects.get(beanName);
+		// 不存在判断bean是否正在创建中
 		if (singletonObject == null && isSingletonCurrentlyInCreation(beanName)) {
 			synchronized (this.singletonObjects) {
+				// 从三级缓存中获取bean：这个是从二级缓存中生成的bean【防止重复创建】
 				singletonObject = this.earlySingletonObjects.get(beanName);
+				// 不存在且允许访问早期引用，此处早起引用是创建bean实例时缓存 addSingletonFactory(beanName, () -> getEarlyBeanReference(beanName, mbd, bean))
 				if (singletonObject == null && allowEarlyReference) {
+					// 从beanFactory二级缓存中获取singletonFactory
 					ObjectFactory<?> singletonFactory = this.singletonFactories.get(beanName);
 					if (singletonFactory != null) {
+						// 从beanFactory中获取bean 【属性未注入，如X.y = null】
 						singletonObject = singletonFactory.getObject();
+						// 放入三级缓存
 						this.earlySingletonObjects.put(beanName, singletonObject);
+						// 移除二级缓存
 						this.singletonFactories.remove(beanName);
 					}
 				}
@@ -212,6 +225,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 				if (logger.isDebugEnabled()) {
 					logger.debug("Creating shared instance of singleton bean '" + beanName + "'");
 				}
+				// bean创建前置校验 singletonsCurrentlyInCreation.add(beanName)
 				beforeSingletonCreation(beanName);
 				boolean newSingleton = false;
 				boolean recordSuppressedExceptions = (this.suppressedExceptions == null);
@@ -243,6 +257,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 					if (recordSuppressedExceptions) {
 						this.suppressedExceptions = null;
 					}
+					// bean创建后置校验
 					afterSingletonCreation(beanName);
 				}
 				if (newSingleton) {

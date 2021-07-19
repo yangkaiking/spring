@@ -1,5 +1,7 @@
+package com.service;
+
 /**
- * SysUser
+ * com.service.SysUser
  *
  * @author YangKai
  * @date 2021/6/25

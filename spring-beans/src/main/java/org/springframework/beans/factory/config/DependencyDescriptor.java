@@ -16,6 +16,15 @@
 
 package org.springframework.beans.factory.config;
 
+import kotlin.reflect.KProperty;
+import kotlin.reflect.jvm.ReflectJvmMapping;
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.BeanFactory;
+import org.springframework.beans.factory.InjectionPoint;
+import org.springframework.beans.factory.NoUniqueBeanDefinitionException;
+import org.springframework.core.*;
+import org.springframework.lang.Nullable;
+
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
@@ -25,20 +34,6 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Map;
 import java.util.Optional;
-
-import kotlin.reflect.KProperty;
-import kotlin.reflect.jvm.ReflectJvmMapping;
-
-import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.BeanFactory;
-import org.springframework.beans.factory.InjectionPoint;
-import org.springframework.beans.factory.NoUniqueBeanDefinitionException;
-import org.springframework.core.GenericTypeResolver;
-import org.springframework.core.KotlinDetector;
-import org.springframework.core.MethodParameter;
-import org.springframework.core.ParameterNameDiscoverer;
-import org.springframework.core.ResolvableType;
-import org.springframework.lang.Nullable;
 
 /**
  * Descriptor for a specific dependency that is about to be injected.
@@ -248,6 +243,7 @@ public class DependencyDescriptor extends InjectionPoint implements Serializable
 	public Object resolveCandidate(String beanName, Class<?> requiredType, BeanFactory beanFactory)
 			throws BeansException {
 
+		// TODO 6 获取bean
 		return beanFactory.getBean(beanName);
 	}
 
