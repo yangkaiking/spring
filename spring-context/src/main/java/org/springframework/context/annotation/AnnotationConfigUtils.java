@@ -16,11 +16,6 @@
 
 package org.springframework.context.annotation;
 
-import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.Map;
-import java.util.Set;
-
 import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition;
 import org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor;
 import org.springframework.beans.factory.annotation.RequiredAnnotationBeanPostProcessor;
@@ -39,6 +34,11 @@ import org.springframework.core.type.AnnotatedTypeMetadata;
 import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.lang.Nullable;
 import org.springframework.util.ClassUtils;
+
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Utility class that allows for convenient registration of common
@@ -135,6 +135,15 @@ public class AnnotationConfigUtils {
 	}
 
 	/**
+	 * 这个方法向BeanDefinitionMap中添加了7个类，
+	 * 这7个类的BeanDefinition(关于BeanDefinition的介绍可以参考前面的解释)均为RootBeanDefinition，
+	 * 这几个类分别为
+	 *   ConfigurationClassPostProcessor、
+	 *   AutowiredAnnotationBeanPostProcessor、
+	 *   CommonAnnotationBeanPostProcessor、
+	 *   RequiredAnnotationBeanPostProcessor、
+	 *   EventListenerMethodProcessor、
+	 *   DefaultEventListenerFactory
 	 * Register all relevant annotation post processors in the given registry.
 	 * @param registry the registry to operate on
 	 * @param source the configuration source element (already extracted)
@@ -144,7 +153,6 @@ public class AnnotationConfigUtils {
 	 */
 	public static Set<BeanDefinitionHolder> registerAnnotationConfigProcessors(
 			BeanDefinitionRegistry registry, @Nullable Object source) {
-
 		DefaultListableBeanFactory beanFactory = unwrapDefaultListableBeanFactory(registry);
 		if (beanFactory != null) {
 			if (!(beanFactory.getDependencyComparator() instanceof AnnotationAwareOrderComparator)) {
