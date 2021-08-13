@@ -43,13 +43,16 @@ final class PostProcessorRegistrationDelegate {
 
 		// Invoke BeanDefinitionRegistryPostProcessors first, if any.
 		Set<String> processedBeans = new HashSet<>();
-
+        // beanFactory默认为DefaultListableBeanFactory
 		if (beanFactory instanceof BeanDefinitionRegistry) {
+			// 转化为父接口
 			BeanDefinitionRegistry registry = (BeanDefinitionRegistry) beanFactory;
 			List<BeanFactoryPostProcessor> regularPostProcessors = new ArrayList<>();
 			List<BeanDefinitionRegistryPostProcessor> registryProcessors = new ArrayList<>();
-
+            // beanFactoryPostProcessors默认为空
+			// 除非通过context.addBeanFactoryPostProcessor(beanFactoryPostProcessor)添加
 			for (BeanFactoryPostProcessor postProcessor : beanFactoryPostProcessors) {
+				// 不会进入
 				if (postProcessor instanceof BeanDefinitionRegistryPostProcessor) {
 					BeanDefinitionRegistryPostProcessor registryProcessor =
 							(BeanDefinitionRegistryPostProcessor) postProcessor;
@@ -68,17 +71,22 @@ final class PostProcessorRegistrationDelegate {
 			List<BeanDefinitionRegistryPostProcessor> currentRegistryProcessors = new ArrayList<>();
 
 			// First, invoke the BeanDefinitionRegistryPostProcessors that implement PriorityOrdered.
+			// 得到ConfigurationClassPostProcessor
+			// 名称为 org.springframework.context.annotation.internalConfigurationAnnotationProcessor
+			// 这个是在初始化时添加的，AnnotationConfigApplicationContext()#new AnnotatedBeanDefinitionReader(this),默认6个
 			String[] postProcessorNames =
 					beanFactory.getBeanNamesForType(BeanDefinitionRegistryPostProcessor.class, true, false);
 			for (String ppName : postProcessorNames) {
 				if (beanFactory.isTypeMatch(ppName, PriorityOrdered.class)) {
+					// beanFactory.getBean()实例化ConfigurationClassPostProcessor，用于下面处理BeanDefinition
 					currentRegistryProcessors.add(beanFactory.getBean(ppName, BeanDefinitionRegistryPostProcessor.class));
 					processedBeans.add(ppName);
 				}
 			}
 			sortPostProcessors(currentRegistryProcessors, beanFactory);
 			registryProcessors.addAll(currentRegistryProcessors);
-			// 把实例化好的beanDefinition对象put到beanDefinitionMap当中缓存起来，以便后面实例化bean，
+			// 把实例化好的beanDefinition对象put到beanDefinitionMap当中缓存起来，以便后面实例化bean【用户自定义注册的bean在此时添加beanDefinitionMap】
+			// ConfigurationClassPostProcessor#postProcessBeanDefinitionRegistry
 			invokeBeanDefinitionRegistryPostProcessors(currentRegistryProcessors, registry);
 			currentRegistryProcessors.clear();
 

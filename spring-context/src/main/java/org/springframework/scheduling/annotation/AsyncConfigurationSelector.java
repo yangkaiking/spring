@@ -32,7 +32,9 @@ import org.springframework.lang.Nullable;
  * @see ProxyAsyncConfiguration
  */
 public class AsyncConfigurationSelector extends AdviceModeImportSelector<EnableAsync> {
-
+	// 该类继承了AdviceModeImportSelector，而AdviceModeImportSelector实现了ImportSelector接口
+	// 在父类中重写了selectImports(AnnotationMetadata importingClassMetadata)。
+	// 同时在父类中又重载了selectImports(AdviceMode adviceMode)。
 	private static final String ASYNC_EXECUTION_ASPECT_CONFIGURATION_CLASS_NAME =
 			"org.springframework.scheduling.aspectj.AspectJAsyncConfiguration";
 

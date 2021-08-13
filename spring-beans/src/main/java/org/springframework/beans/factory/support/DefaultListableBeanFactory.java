@@ -1059,7 +1059,8 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 			if (multipleBeans != null) {
 				return multipleBeans;
 			}
-
+            // 如果注入的是ApplicationContext、MessageSource等，直接从resolvableDependencies缓存中获取
+			// 因为前项 refresh()#prepareBeanFactory()#beanFactory.registerResolvableDependency(ApplicationContext.class)已添加
 			Map<String, Object> matchingBeans = findAutowireCandidates(beanName, type, descriptor);
 			if (matchingBeans.isEmpty()) {
 				if (isRequired(descriptor)) {

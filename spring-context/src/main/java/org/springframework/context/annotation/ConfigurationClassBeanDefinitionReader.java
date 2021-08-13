@@ -16,17 +16,8 @@
 
 package org.springframework.context.annotation;
 
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.springframework.beans.factory.BeanDefinitionStoreException;
 import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition;
 import org.springframework.beans.factory.annotation.AnnotatedGenericBeanDefinition;
@@ -54,6 +45,14 @@ import org.springframework.core.type.MethodMetadata;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 /**
  * Reads a given fully-populated set of ConfigurationClass instances, registering bean
  * definitions with the given {@link BeanDefinitionRegistry} based on its contents.
@@ -66,8 +65,8 @@ import org.springframework.util.StringUtils;
  * @author Juergen Hoeller
  * @author Phillip Webb
  * @author Sam Brannen
- * @since 3.0
  * @see ConfigurationClassParser
+ * @since 3.0
  */
 class ConfigurationClassBeanDefinitionReader {
 
@@ -95,8 +94,8 @@ class ConfigurationClassBeanDefinitionReader {
 	 * that will be used to populate the given {@link BeanDefinitionRegistry}.
 	 */
 	ConfigurationClassBeanDefinitionReader(BeanDefinitionRegistry registry, SourceExtractor sourceExtractor,
-			ResourceLoader resourceLoader, Environment environment, BeanNameGenerator importBeanNameGenerator,
-			ImportRegistry importRegistry) {
+										   ResourceLoader resourceLoader, Environment environment, BeanNameGenerator importBeanNameGenerator,
+										   ImportRegistry importRegistry) {
 
 		this.registry = registry;
 		this.sourceExtractor = sourceExtractor;
@@ -115,6 +114,7 @@ class ConfigurationClassBeanDefinitionReader {
 	public void loadBeanDefinitions(Set<ConfigurationClass> configurationModel) {
 		TrackedConditionEvaluator trackedConditionEvaluator = new TrackedConditionEvaluator();
 		for (ConfigurationClass configClass : configurationModel) {
+			// 循环调用loadBeanDefinitionsForConfigurationClass()
 			loadBeanDefinitionsForConfigurationClass(configClass, trackedConditionEvaluator);
 		}
 	}
@@ -134,15 +134,18 @@ class ConfigurationClassBeanDefinitionReader {
 			this.importRegistry.removeImportingClass(configClass.getMetadata().getClassName());
 			return;
 		}
-
+        // 如果一个bean是通过@Import(ImportSelector)的方式添加到容器中的，那么此时configClass.isImported()返回的是true
+		// 而且configClass的importedBy属性里面存储的是ConfigurationClass就是将bean导入的类
 		if (configClass.isImported()) {
 			registerBeanDefinitionForImportedConfigurationClass(configClass);
 		}
+		// 判断当前的bean中是否含有@Bean注解的方法，如果有，需要把这些方法产生的bean放入到BeanDefinitionMap当中
 		for (BeanMethod beanMethod : configClass.getBeanMethods()) {
 			loadBeanDefinitionsForBeanMethod(beanMethod);
 		}
 
 		loadBeanDefinitionsFromImportedResources(configClass.getImportedResources());
+		// 如果bean上存在@Import注解，且import的是一个实现了ImportBeanDefinitionRegistrar接口,则执行ImportBeanDefinitionRegistrar的registerBeanDefinitions()方法
 		loadBeanDefinitionsFromRegistrars(configClass.getImportBeanDefinitionRegistrars());
 	}
 
@@ -150,7 +153,9 @@ class ConfigurationClassBeanDefinitionReader {
 	 * Register the {@link Configuration} class itself as a bean definition.
 	 */
 	private void registerBeanDefinitionForImportedConfigurationClass(ConfigurationClass configClass) {
+		// metadata中包含的就是我们要注册的类的信息，例如本次demo中的RegularBean、SelectorBean、RegistrarBean
 		AnnotationMetadata metadata = configClass.getMetadata();
+		// new一个BeanDefinition的实现类
 		AnnotatedGenericBeanDefinition configBeanDef = new AnnotatedGenericBeanDefinition(metadata);
 
 		ScopeMetadata scopeMetadata = scopeMetadataResolver.resolveScopeMetadata(configBeanDef);
@@ -160,6 +165,7 @@ class ConfigurationClassBeanDefinitionReader {
 
 		BeanDefinitionHolder definitionHolder = new BeanDefinitionHolder(configBeanDef, configBeanName);
 		definitionHolder = AnnotationConfigUtils.applyScopedProxyMode(scopeMetadata, definitionHolder, this.registry);
+		// 通过registry对象，将BeanDefinition注册到BeanDefinitionMap中
 		this.registry.registerBeanDefinition(definitionHolder.getBeanName(), definitionHolder.getBeanDefinition());
 		configClass.setBeanName(configBeanName);
 
@@ -216,8 +222,7 @@ class ConfigurationClassBeanDefinitionReader {
 			// static @Bean method
 			beanDef.setBeanClassName(configClass.getMetadata().getClassName());
 			beanDef.setFactoryMethodName(methodName);
-		}
-		else {
+		} else {
 			// instance @Bean method
 			beanDef.setFactoryBeanName(configClass.getBeanName());
 			beanDef.setUniqueFactoryMethodName(methodName);
@@ -305,7 +310,7 @@ class ConfigurationClassBeanDefinitionReader {
 		}
 		if (logger.isInfoEnabled()) {
 			logger.info(String.format("Skipping bean definition for %s: a definition for bean '%s' " +
-					"already exists. This top-level bean definition is considered as an override.",
+							"already exists. This top-level bean definition is considered as an override.",
 					beanMethod, beanName));
 		}
 		return true;
@@ -322,8 +327,7 @@ class ConfigurationClassBeanDefinitionReader {
 				if (StringUtils.endsWithIgnoreCase(resource, ".groovy")) {
 					// When clearly asking for Groovy, that's what they'll get...
 					readerClass = GroovyBeanDefinitionReader.class;
-				}
-				else {
+				} else {
 					// Primarily ".xml" files but for any other extension as well
 					readerClass = XmlBeanDefinitionReader.class;
 				}
@@ -341,8 +345,7 @@ class ConfigurationClassBeanDefinitionReader {
 						abdr.setEnvironment(this.environment);
 					}
 					readerInstanceCache.put(readerClass, reader);
-				}
-				catch (Throwable ex) {
+				} catch (Throwable ex) {
 					throw new IllegalStateException(
 							"Could not instantiate BeanDefinitionReader class [" + readerClass.getName() + "]");
 				}
