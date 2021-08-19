@@ -73,10 +73,12 @@ public abstract class AopNamespaceUtils {
 
 	public static void registerAspectJAnnotationAutoProxyCreatorIfNecessary(
 			ParserContext parserContext, Element sourceElement) {
-
+		// 注册一个AnnotationAwareAspectJAutoProxyCreator自动代理器，这个Creator是AOP的操作核心，也是扫描Bean代理bean的操作所在
 		BeanDefinition beanDefinition = AopConfigUtils.registerAspectJAnnotationAutoProxyCreatorIfNecessary(
 				parserContext.getRegistry(), parserContext.extractSource(sourceElement));
+		// 解析配置元素，决定代理的模式。其中有JDK动态代理和CGLIB代理
 		useClassProxyingIfNecessary(parserContext.getRegistry(), sourceElement);
+		// 作为系统组件，把Creator这个Bean，放到spring容器中，让spring实例化时启动这个bean
 		registerComponentIfNecessary(beanDefinition, parserContext);
 	}
 

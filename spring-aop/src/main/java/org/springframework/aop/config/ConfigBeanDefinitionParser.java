@@ -16,13 +16,6 @@
 
 package org.springframework.aop.config;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-
 import org.springframework.aop.aspectj.AspectJAfterAdvice;
 import org.springframework.aop.aspectj.AspectJAfterReturningAdvice;
 import org.springframework.aop.aspectj.AspectJAfterThrowingAdvice;
@@ -48,6 +41,12 @@ import org.springframework.beans.factory.xml.ParserContext;
 import org.springframework.lang.Nullable;
 import org.springframework.util.StringUtils;
 import org.springframework.util.xml.DomUtils;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * {@link BeanDefinitionParser} for the {@code <aop:config>} tag.
@@ -102,7 +101,8 @@ class ConfigBeanDefinitionParser implements BeanDefinitionParser {
 		CompositeComponentDefinition compositeDef =
 				new CompositeComponentDefinition(element.getTagName(), parserContext.extractSource(element));
 		parserContext.pushContainingComponent(compositeDef);
-
+		// 向Spring容器注册了一个BeanName为org.springframework.aop.config.internalAutoProxyCreator的Bean定义，
+		// 可以自定义也可以使用Spring提供的（根据优先级来） Spring默认提供的是org.springframework.aop.aspectj.autoproxy.AspectJAwareAdvisorAutoProxyCreator
 		configureAutoProxyCreator(parserContext, element);
 
 		List<Element> childElts = DomUtils.getChildElements(element);
@@ -195,6 +195,13 @@ class ConfigBeanDefinitionParser implements BeanDefinitionParser {
 		return advisorDefinition;
 	}
 
+	/**
+	 * 解析切面：
+	 *   parseAdvice：增强，在切入点中具体要做的操作
+	 *   parsePointcut：切入点
+	 * @param aspectElement
+	 * @param parserContext
+	 */
 	private void parseAspect(Element aspectElement, ParserContext parserContext) {
 		String aspectId = aspectElement.getAttribute(ID);
 		String aspectName = aspectElement.getAttribute(REF);
@@ -227,6 +234,7 @@ class ConfigBeanDefinitionParser implements BeanDefinitionParser {
 						}
 						beanReferences.add(new RuntimeBeanReference(aspectName));
 					}
+					// TODO 如果是通知类型 的节点解析BeanDefinition
 					AbstractBeanDefinition advisorDefinition = parseAdvice(
 							aspectName, i, aspectElement, (Element) node, parserContext, beanDefinitions, beanReferences);
 					beanDefinitions.add(advisorDefinition);
@@ -239,6 +247,7 @@ class ConfigBeanDefinitionParser implements BeanDefinitionParser {
 
 			List<Element> pointcuts = DomUtils.getChildElementsByTagName(aspectElement, POINTCUT);
 			for (Element pointcutElement : pointcuts) {
+				// TODO 解析切入点
 				parsePointcut(pointcutElement, parserContext);
 			}
 
@@ -270,6 +279,7 @@ class ConfigBeanDefinitionParser implements BeanDefinitionParser {
 		}
 		else {
 			String name = parserContext.getDelegate().getLocalName(aNode);
+			// 判断是否是通知类型的节点
 			return (BEFORE.equals(name) || AFTER.equals(name) || AFTER_RETURNING_ELEMENT.equals(name) ||
 					AFTER_THROWING_ELEMENT.equals(name) || AROUND.equals(name));
 		}
@@ -332,11 +342,18 @@ class ConfigBeanDefinitionParser implements BeanDefinitionParser {
 			aspectFactoryDef.setSynthetic(true);
 
 			// register the pointcut
+			// 根据织入方式(before、after这些)创建对应的BeanDefinition
+			// before对应AspectJMethodBeforeAdvice
+			// After对应AspectJAfterAdvice
+			// after-returning对应AspectJAfterReturningAdvice
+			// after-throwing对应AspectJAfterThrowingAdvice
+			// around对应AspectJAroundAdvice
 			AbstractBeanDefinition adviceDef = createAdviceDefinition(
 					adviceElement, parserContext, aspectName, order, methodDefinition, aspectFactoryDef,
 					beanDefinitions, beanReferences);
 
 			// configure the advisor
+			// 将上一步生成的RootBeanDefinition包装了一下，new一个新的RootBeanDefinition出来，Class类型是org.springframework.aop.aspectj.AspectJPointcutAdvisor
 			RootBeanDefinition advisorDefinition = new RootBeanDefinition(AspectJPointcutAdvisor.class);
 			advisorDefinition.setSource(parserContext.extractSource(adviceElement));
 			advisorDefinition.getConstructorArgumentValues().addGenericArgumentValue(adviceDef);
@@ -365,7 +382,7 @@ class ConfigBeanDefinitionParser implements BeanDefinitionParser {
 			Element adviceElement, ParserContext parserContext, String aspectName, int order,
 			RootBeanDefinition methodDef, RootBeanDefinition aspectFactoryDef,
 			List<BeanDefinition> beanDefinitions, List<BeanReference> beanReferences) {
-
+        // 返回对应的 RootBeanDefinition
 		RootBeanDefinition adviceDefinition = new RootBeanDefinition(getAdviceClass(adviceElement, parserContext));
 		adviceDefinition.setSource(parserContext.extractSource(adviceElement));
 
@@ -441,6 +458,8 @@ class ConfigBeanDefinitionParser implements BeanDefinitionParser {
 
 		try {
 			this.parseState.push(new PointcutEntry(id));
+			// 生成切入点BeanDefinition
+			// BeanDefinition是RootBeanDefinition，且RootBeanDefinitoin中的Class是org.springframework.aop.aspectj.AspectJExpressionPointcut
 			pointcutDefinition = createPointcutDefinition(expression);
 			pointcutDefinition.setSource(parserContext.extractSource(pointcutElement));
 

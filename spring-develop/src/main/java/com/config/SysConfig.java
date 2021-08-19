@@ -28,6 +28,8 @@ public class SysConfig {
 
 	@Bean
 	public CarFactoryBean carFactoryBean() {
+		sysUser();
 		return new CarFactoryBean();
 	}
+
 }

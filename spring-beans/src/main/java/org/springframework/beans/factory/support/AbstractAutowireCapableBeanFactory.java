@@ -537,6 +537,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			// 完成属性填充，比如A里面注入B，那么就是这个方法完成属性注入
 			populateBean(beanName, mbd, instanceWrapper);
 			// 主要执行各种生命周期回调方法及aop等
+			// aop代理：AnnotationAwareAspectJAutoProxyCreator父类AbstractAutoProxyCreator.postProcessAfterInitialization()
 			exposedObject = initializeBean(beanName, exposedObject, mbd);
 		}
 		catch (Throwable ex) {

@@ -316,7 +316,6 @@ class ConfigurationClassParser {
 		// Process any @Import annotations
 		// 4.处理Import注解注册的bean，这一步只会将import注册的bean变为ConfigurationClass,不会变成BeanDefinition
 		// 而是在loadBeanDefinitions()方法中变成BeanDefinition，再放入到BeanDefinitionMap中
-		// 关于Import注解,后面会单独写文章介绍
 		processImports(configClass, sourceClass, getImports(sourceClass), true);
 
 		// Process any @ImportResource annotations
