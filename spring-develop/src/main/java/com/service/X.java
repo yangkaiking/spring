@@ -1,5 +1,8 @@
 package com.service;
 
+import com.dao.DaoImpl;
+import com.dao.DaoServiceImpl;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /**
@@ -12,6 +15,9 @@ import org.springframework.stereotype.Component;
 @Component
 public class X {
 
+	@Autowired
+	DaoServiceImpl daoService;
+
 	private Y y;
 
 	public X() {
@@ -19,6 +25,7 @@ public class X {
 	}
 
 	public void print() {
+		daoService.insert(new DaoImpl());
 		System.out.println("y = " + y);
 	}
 

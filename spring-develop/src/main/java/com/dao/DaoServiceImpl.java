@@ -12,6 +12,7 @@ public class DaoServiceImpl {
 
 	private Dao dao = new DaoImpl();
 
+//	@Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_UNCOMMITTED, rollbackFor = {Exception.class})
 	public void insert(Dao dao) {
 		System.out.println("Before DaoServiceImpl insert");
 		dao.insert();
